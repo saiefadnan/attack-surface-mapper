@@ -11,6 +11,7 @@ import re
 import httpx
 import dns.asyncresolver
 import dns.resolver
+import ipaddress
 
 from asm.models import Host, HttpProbe
 
@@ -29,14 +30,19 @@ async def resolve_host(name: str, timeout: float) -> Host:
       Catch the dns exceptions and return a Host with no addresses.
     """
     host = Host(name=name, addresses=[])
-    resolver = dns.asyncresolver.Resolver()
-    dns.resolver.Resolver.lifetime = timeout
     try:
-      answer = await resolver.resolve(name, "A")
-      host.addresses = sorted({r.address for r in answer})
-    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout, dns.resolver.NoNameservers):
-      pass
-    return host
+      ipaddress.ip_address(name)
+      host.addresses = [name]
+      return host
+    except ValueError:
+      resolver = dns.asyncresolver.Resolver()
+      resolver.lifetime = timeout
+      try:
+        answer = await resolver.resolve(name, "A")
+        host.addresses = sorted({r.address for r in answer})
+      except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout, dns.resolver.NoNameservers):
+        pass
+      return host
 
 
 def _extract_title(body: str) -> str | None:
