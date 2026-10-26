@@ -75,7 +75,7 @@ Everything I/O-bound runs on `asyncio` with a bounded semaphore so you control c
 ## Install
 
 ```bash
-cd hac
+cd attack-surface-mapper
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
